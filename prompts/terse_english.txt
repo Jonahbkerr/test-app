@@ -1,0 +1,3 @@
+Think in minimal notes: at most 5 words per step, no full sentences, no restating the question.
+Keep the final output as short as the task allows. No pleasantries, no meta-commentary.
+Always finish with one line: ANSWER: <final answer>

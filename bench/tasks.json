@@ -1,0 +1,10 @@
+[
+  {"id": "arith-1", "type": "answer", "prompt": "A train travels 60 km/h for 2.5 hours, then 80 km/h for 1.5 hours. Total distance in km?", "answer": "270"},
+  {"id": "arith-2", "type": "answer", "prompt": "A tank holds 500 L. It is 40% full. Pumping adds 15 L per minute. After how many minutes is it exactly 75% full?", "answer": "11.67|11.7|35/3"},
+  {"id": "logic-1", "type": "answer", "prompt": "Alice is older than Bob. Bob is older than Carol. Dan is younger than Carol. Who is the second oldest?", "answer": "Bob"},
+  {"id": "logic-2", "type": "answer", "prompt": "Three boxes are labeled Apples, Oranges, Mixed, and every label is wrong. You draw one fruit from the box labeled Mixed and it is an apple. What does the box labeled Oranges contain? Answer with Apples, Oranges, or Mixed.", "answer": "Mixed"},
+  {"id": "count-1", "type": "answer", "prompt": "How many distinct ways can the letters A, B, C be arranged in a row if A must not be first?", "answer": "4"},
+  {"id": "state-1", "type": "answer", "prompt": "A counter starts at 5. Apply in order: double it, subtract 3, square it, subtract 10. Final value?", "answer": "39"},
+  {"id": "spec-1", "type": "spec", "prompt": "GEN~ a spec for a login rate limiter: 5 failed attempts in 10 minutes locks the account for 15 minutes.", "must_include": ["STATE", "5", "15"]},
+  {"id": "spec-2", "type": "spec", "prompt": "GEN~ a spec for a shopping cart that applies a 10% discount when the subtotal exceeds $100.", "must_include": ["100", "10"]}
+]
