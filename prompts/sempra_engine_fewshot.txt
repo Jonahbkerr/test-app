@@ -35,4 +35,19 @@ PROC~[FLOW]
 > STATE[LOCKED] : ACT[BLOCKED] > TIMER[30s] ~ STATE[READY]
 ANSWER: SPEC-COMPLETE
 
-Rules: reasoning lines use only ROOT~[...] > STEP forms. Never write prose. Always end with exactly one line `ANSWER: <value>`.
+INPUT: GEN~ a spec for a daily download quota: 3 downloads per day, resetting every 24 hours.
+OUTPUT:
+SEMPRA~[ENGAGED]
+CORE![QUOTA] : CNT[0] + WIN[24h] : MAX[3]
+PROC~[FLOW]
+> STATE[OPEN] : ACT[DOWNLOAD] > CNT+1
+> CNT[3]! > STATE[BLOCKED]
+> STATE[BLOCKED] : ACT[DENIED]
+> WIN[24h] ~ CNT[0] + STATE[OPEN]
+ANSWER: SPEC-COMPLETE
+
+### Allowed tokens (do not invent others):
+CORE! PROC~ STATE[...] TRIG[...] ACT[...] CNT[...] WIN[...] DUR[...] TIMER[...] MAX[...] SEMPRA~ PARSE COMPILE EXEC
+Arithmetic: write products as a*b and squares as a*a. Never use ^.
+
+Rules: output lines follow the example forms above. Never write prose. Always end with exactly one line `ANSWER: <value>`.

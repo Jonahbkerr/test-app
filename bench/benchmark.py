@@ -55,9 +55,10 @@ def extract_answer(text):
     return matches[-1].strip().strip("*`.") if matches else None
 
 
-def numbers_match(got, want):
+def is_number(s):
     try:
-        return abs(float(got) - float(want)) <= 0.02 * max(1.0, abs(float(want)))
+        float(s)
+        return True
     except ValueError:
         return False
 
@@ -66,8 +67,13 @@ def is_correct(task, text):
     got = extract_answer(text)
     if got is None:
         return False
+    first_num = re.search(r"-?\d+(?:\.\d+)?", got)
     for alt in task["answer"].split("|"):
-        if alt.lower() in got.lower() or numbers_match(re.sub(r"[^\d.\-]", "", got), alt):
+        if is_number(alt):
+            # numeric answers: compare the first number in the reply, tight tolerance
+            if first_num and abs(float(first_num.group()) - float(alt)) <= 0.05:
+                return True
+        elif alt.lower() in got.lower():
             return True
     return False
 
