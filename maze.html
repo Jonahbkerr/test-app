@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Presumption to Reality</title>
+  <style>
+    :root {
+      --bg: #0f172a; --panel: #1e293b; --panel-2: #162033; --line: rgba(255,255,255,0.08);
+      --text: #e2e8f0; --muted: #94a3b8; --faint: #64748b;
+      --accent: #8b5cf6; --accent-strong: #7c3aed; --cyan: #22d3ee;
+      --wall: #cbd5e1; --floor: #131d33; --trail: #a78bfa; --good: #34d399;
+    }
+    @media (prefers-color-scheme: light) {
+      :root:not([data-theme="dark"]) {
+        --bg: #f8fafc; --panel: #ffffff; --panel-2: #f1f5f9; --line: rgba(15,23,42,0.1);
+        --text: #0f172a; --muted: #475569; --faint: #64748b;
+        --accent: #7c3aed; --accent-strong: #6d28d9; --cyan: #0891b2;
+        --wall: #334155; --floor: #eef2ff; --trail: #7c3aed; --good: #059669;
+      }
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.5; }
+
+    nav { display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem; border-bottom: 1px solid var(--line); background: var(--panel); }
+    nav .logo { font-size: 1.25rem; font-weight: 700; color: var(--accent); text-decoration: none; }
+    nav a.back { color: var(--muted); text-decoration: none; font-size: 0.875rem; }
+    nav a.back:hover { color: var(--text); }
+
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 0 1rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.25rem; font-weight: 750; letter-spacing: -0.01em; margin-bottom: 0.75rem; }
+    .hero h1 .from { color: var(--muted); }
+    .hero h1 .to { color: var(--accent); }
+    .hero p { color: var(--muted); max-width: 640px; margin: 0 auto; font-size: 1.05rem; }
+
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 1rem; }
+    h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+    h3 { font-size: 1rem; font-weight: 650; }
+    .muted { color: var(--muted); }
+    .small { font-size: 0.85rem; }
+
+    /* Game */
+    .game { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 1rem; align-items: start; }
+    .maze-card { padding: 0.75rem; }
+    #maze { width: 100%; height: auto; display: block; touch-action: manipulation; cursor: pointer; user-select: none; }
+    .controls { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; justify-content: space-between; padding: 0.75rem 0.25rem 0.25rem; }
+    .btns { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    button { font: inherit; cursor: pointer; }
+    .btn { padding: 0.5rem 1rem; border-radius: 9999px; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); font-size: 0.875rem; font-weight: 550; }
+    .btn:hover { border-color: var(--accent); }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn.primary:hover { background: var(--accent-strong); }
+    .dpad { display: grid; grid-template-columns: repeat(3, 2.5rem); grid-template-rows: repeat(2, 2.5rem); gap: 0.25rem; }
+    .dpad button { border-radius: 0.5rem; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); font-size: 1rem; }
+    .dpad button:active { background: var(--accent); color: #fff; }
+    .dpad .up { grid-column: 2; grid-row: 1; }
+    .dpad .left { grid-column: 1; grid-row: 2; }
+    .dpad .down { grid-column: 2; grid-row: 2; }
+    .dpad .right { grid-column: 3; grid-row: 2; }
+    .hint { font-size: 0.8rem; color: var(--faint); }
+
+    .side { display: flex; flex-direction: column; gap: 1rem; }
+    .side .card { padding: 1rem; }
+    .scene { width: 100%; height: auto; display: block; border-radius: 0.6rem; background: var(--panel-2); }
+    .chips { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.6rem; }
+    .chip { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.75rem; padding: 0.15rem 0.55rem 0.15rem 0.4rem; border-radius: 9999px; background: var(--panel-2); border: 1px solid var(--line); white-space: nowrap; }
+    .chip i { width: 0.55rem; height: 0.55rem; border-radius: 50%; display: inline-block; }
+    .chip .n { color: var(--faint); font-variant-numeric: tabular-nums; }
+    #log { font-size: 0.85rem; color: var(--muted); min-height: 4.5rem; }
+    #log strong { color: var(--text); }
+
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 1rem 0 0; }
+    .stat { padding: 1rem 1.25rem; }
+    .stat .num { font-size: 1.75rem; font-weight: 750; color: var(--accent); font-variant-numeric: tabular-nums; }
+    .stat .num.zero { color: var(--good); }
+    .stat .lbl { color: var(--muted); font-size: 0.85rem; }
+
+    section.block { margin-top: 3rem; }
+    #result { display: none; }
+    #result.show { display: block; }
+    .result-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 1.25rem; margin-top: 1rem; }
+    .result-grid .card { padding: 1rem; }
+    ol.notes { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
+    ol.notes li { display: grid; grid-template-columns: 1.75rem 1fr; gap: 0.5rem; font-size: 0.9rem; color: var(--muted); }
+    ol.notes li .ic { font-size: 1.1rem; line-height: 1.4; text-align: center; }
+    ol.notes li b { color: var(--text); font-weight: 600; }
+
+    .gallery { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; margin-top: 1rem; }
+    .traveler { padding: 0.75rem; display: flex; flex-direction: column; }
+    .traveler h3 { display: flex; align-items: center; gap: 0.45rem; margin-bottom: 0.5rem; font-size: 0.9rem; }
+    .traveler h3 i { width: 0.7rem; height: 0.7rem; border-radius: 50%; display: inline-block; }
+    .traveler .meta { font-size: 0.75rem; color: var(--faint); margin-top: 0.4rem; }
+    .territory { border: 2px dashed var(--faint); background: transparent; align-items: center; justify-content: center; text-align: center; padding: 1rem; }
+    .territory .q { font-size: 3rem; font-weight: 800; color: var(--faint); line-height: 1; margin: 0.5rem 0; }
+
+    .why { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem; }
+    .why .card { padding: 1.25rem; }
+    .why p { color: var(--muted); font-size: 0.9rem; margin-top: 0.4rem; }
+    .gates { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-top: 1rem; }
+    .gate { padding: 1rem; display: grid; grid-template-columns: 2.25rem 1fr; gap: 0.75rem; }
+    .gate .ic { width: 2.25rem; height: 2.25rem; border-radius: 50%; display: grid; place-items: center; font-size: 1.1rem; border: 2px solid; }
+    .gate p { color: var(--muted); font-size: 0.875rem; margin-top: 0.15rem; }
+    .takeaway { margin-top: 1.5rem; padding: 1.5rem; border-left: 4px solid var(--accent); }
+    .takeaway p { color: var(--muted); margin-top: 0.5rem; }
+    .takeaway p strong { color: var(--text); }
+
+    footer { border-top: 1px solid var(--line); padding: 2rem; text-align: center; color: var(--faint); font-size: 0.875rem; margin-top: 4rem; }
+
+    @media (max-width: 960px) {
+      .game { grid-template-columns: 1fr; }
+      .gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .why { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      nav { padding: 1rem; }
+      .hero h1 { font-size: 1.6rem; }
+      .stats { grid-template-columns: 1fr; }
+      .result-grid { grid-template-columns: 1fr; }
+      .gates { grid-template-columns: 1fr; }
+      .gallery { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a class="logo" href="index.html">TestApp</a>
+    <a class="back" href="index.html">&larr; Back to home</a>
+  </nav>
+
+  <main class="wrap">
+    <header class="hero">
+      <h1><span class="from">From Presumption</span> to <span class="to">Reality</span></h1>
+      <p>Find your way through the maze. Every route reaches the door marked "Reality", but each one passes through different filters. What you see at the end depends on how you got there.</p>
+    </header>
+
+    <div class="game">
+      <div class="card maze-card">
+        <svg id="maze" role="img" aria-label="Maze from Presumption to Reality"></svg>
+        <div class="controls">
+          <div>
+            <div class="btns">
+              <button class="btn primary" id="btn-ghosts">Send other travelers</button>
+              <button class="btn" id="btn-restart">Restart</button>
+              <button class="btn" id="btn-new">New maze</button>
+            </div>
+            <p class="hint" style="margin-top:0.5rem">Use the arrow keys or WASD, tap a spot in the maze, or use the pad.</p>
+          </div>
+          <div class="dpad" aria-label="Movement controls">
+            <button class="up" data-dir="0" aria-label="Up">&#9650;</button>
+            <button class="left" data-dir="3" aria-label="Left">&#9664;</button>
+            <button class="down" data-dir="2" aria-label="Down">&#9660;</button>
+            <button class="right" data-dir="1" aria-label="Right">&#9654;</button>
+          </div>
+        </div>
+      </div>
+
+      <aside class="side">
+        <div class="card">
+          <h3>"Reality" through your lens so far</h3>
+          <div id="preview" style="margin-top:0.6rem"></div>
+          <div class="chips" id="lens-chips"></div>
+        </div>
+        <div class="card">
+          <h3>Journey log</h3>
+          <div id="log" style="margin-top:0.4rem"></div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="stats">
+      <div class="card stat"><div class="num" id="stat-routes">…</div><div class="lbl">different routes from Presumption to Reality in this maze</div></div>
+      <div class="card stat"><div class="num" id="stat-orders">…</div><div class="lbl">different orders of filters those routes pass through</div></div>
+      <div class="card stat"><div class="num zero">0</div><div class="lbl">routes that reach Reality without passing a filter</div></div>
+    </div>
+
+    <section class="block" id="result" aria-live="polite">
+      <h2>You reached "Reality"</h2>
+      <p class="muted" id="result-sub"></p>
+      <div class="result-grid">
+        <div class="card"><div id="result-scene"></div></div>
+        <div class="card"><ol class="notes" id="result-notes"></ol></div>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>Same maze, same exit, different realities</h2>
+      <p class="muted">Each traveler took a different route to the same door. Here is the "reality" each one walked out with. None of them is lying, and none of them sees the world as it is.</p>
+      <div class="gallery" id="gallery"></div>
+    </section>
+
+    <section class="block">
+      <h2>Why perception might not be reality</h2>
+      <div class="why">
+        <div class="card"><h3>1. There is no unfiltered door</h3><p>Every route starts at the senses. Before you can think about the world, a narrow set of nerve endings has already decided which small slice of it reaches you.</p></div>
+        <div class="card"><h3>2. The order changes the picture</h3><p>Doubt before a rumor can't catch the rumor. Doubt after it can. The same filters in a different order produce a different reality, and none of them feels like a filter from the inside.</p></div>
+        <div class="card"><h3>3. Arriving feels like seeing</h3><p>At the exit every traveler feels they're looking at what's really there. The brain hides its own editing, so the result shows up as plain fact and not as a guess.</p></div>
+      </div>
+
+      <h2 style="margin-top:2.5rem">The filters in the maze</h2>
+      <div class="gates" id="gate-list"></div>
+
+      <div class="card takeaway">
+        <h3>The map is not the territory</h3>
+        <p>What we call "reality" is a model the brain builds from limited signals, shaped by attention, memory, expectation, mood, words, culture and other people. Good models are very useful. That's why we survive. But they are still models.</p>
+        <p><strong>The practical lesson:</strong> when someone else's "reality" disagrees with yours, they may simply have taken a different route through the maze. Comparing routes, using instruments, and doubting yourself in the right order gets you closer, but you never step outside the maze.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer><p>&copy; 2026 TestApp. Built for Yocoolab testing.</p></footer>
+
+  <script>
+  (() => {
+    'use strict';
+
+    // ---------- Filters ("gates") ----------
+    const GATES = {
+      senses:      { name: 'Senses',       icon: '👁️', color: '#38bdf8', text: 'Your eyes catch a narrow band of light and your ears a narrow band of sound. Ultraviolet patterns and body heat are all around you, and you never see them. Reality is cut down before you think a single thought.' },
+      attention:   { name: 'Attention',    icon: '🔦', color: '#facc15', text: 'The brain can\'t process everything, so it puts a spotlight on a few things and drops the rest. In the famous "invisible gorilla" study, about half of the people counting basketball passes never noticed a person in a gorilla suit walking through the scene.' },
+      memory:      { name: 'Memory',       icon: '🧠', color: '#f472b6', text: 'Memory is rebuilt each time you recall something. It isn\'t played back like a recording. Details drift, swap and fill in, and you feel just as sure either way.' },
+      expectation: { name: 'Expectation',  icon: '🔮', color: '#c084fc', text: 'The brain predicts what should be there, and often what you see is the prediction. You can "see" something that isn\'t there because it usually is.' },
+      emotion:     { name: 'Emotion',      icon: '💓', color: '#fb7185', text: 'Mood colors the whole scene. Frustration drains it of color and joy turns the color up. In this maze, your mood depends on how lost you got before reaching this gate.' },
+      language:    { name: 'Language',     icon: '🗣️', color: '#fb923c', text: 'Words sort a continuous world into boxes. Once you have the label "tree", you tend to see a tree and stop looking at the thing itself.' },
+      culture:     { name: 'Culture',      icon: '🏛️', color: '#a3e635', text: 'Upbringing decides what counts as important. Some things loom larger in your mind and others shrink until you barely notice them.' },
+      testimony:   { name: 'Other people', icon: '👥', color: '#2dd4bf', text: 'Much of what you "know" you were told. A confident retelling can quietly replace what you saw yourself.' },
+      instruments: { name: 'Instruments',  icon: '🔬', color: '#60a5fa', text: 'Tools extend the senses and reveal hidden patterns like UV and heat. They only show what they were built to detect, and their readings still have to be interpreted.' },
+      doubt:       { name: 'Doubt',        icon: '❓', color: '#cbd5e1', text: 'Questioning your own view can catch some errors, but only the ones you already know to look for. What attention threw away never comes back.' },
+    };
+    const GATE_ORDER = Object.keys(GATES);
+
+    // ---------- Seeded RNG ----------
+    function mulberry32(a) {
+      return function () {
+        a |= 0; a = a + 0x6D2B79F5 | 0;
+        let t = Math.imul(a ^ a >>> 15, 1 | a);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      };
+    }
+    function shuffle(arr, rng) {
+      for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; }
+      return arr;
+    }
+
+    // ---------- Maze ----------
+    const W = 15, H = 11, CS = 36, MX = 70, MY = 16;
+    const VBW = MX * 2 + W * CS, VBH = MY * 2 + H * CS;
+    // [dx, dy, bit, oppositeBit]; order: up, right, down, left
+    const DIRS = [[0, -1, 1, 4], [1, 0, 2, 8], [0, 1, 4, 1], [-1, 0, 8, 2]];
+    const idx = (x, y) => y * W + x;
+    const inb = (x, y) => x >= 0 && y >= 0 && x < W && y < H;
+    const ENTRY = idx(0, Math.floor(H / 2));
+    const EXIT = idx(W - 1, Math.floor(H / 2));
+
+    let open, core, gateAt, distFromEntry, mazeSeed;
+
+    function neighbors(c) {
+      const x = c % W, y = Math.floor(c / W), out = [];
+      for (let d = 0; d < 4; d++) {
+        const [dx, dy, bit] = DIRS[d];
+        if (open[c] & bit) out.push(idx(x + dx, y + dy));
+      }
+      return out;
+    }
+    function carve(c, d) {
+      const x = c % W, y = Math.floor(c / W), [dx, dy, bit, opp] = DIRS[d];
+      open[c] |= bit; open[idx(x + dx, y + dy)] |= opp;
+    }
+    const degree = c => neighbors(c).length;
+
+    function generate(seed) {
+      mazeSeed = seed;
+      const rng = mulberry32(seed);
+      open = new Uint8Array(W * H);
+      const seen = new Uint8Array(W * H);
+      const stack = [ENTRY]; seen[ENTRY] = 1;
+      while (stack.length) {
+        const c = stack[stack.length - 1], x = c % W, y = Math.floor(c / W);
+        const opts = [];
+        for (let d = 0; d < 4; d++) { const nx = x + DIRS[d][0], ny = y + DIRS[d][1]; if (inb(nx, ny) && !seen[idx(nx, ny)]) opts.push(d); }
+        if (!opts.length) { stack.pop(); continue; }
+        const d = opts[Math.floor(rng() * opts.length)];
+        const n = idx(x + DIRS[d][0], y + DIRS[d][1]);
+        carve(c, d); seen[n] = 1; stack.push(n);
+      }
+      // Braid: knock out some dead ends so there are many routes.
+      for (let c = 0; c < W * H; c++) {
+        if (degree(c) !== 1 || rng() > 0.45) continue;
+        const x = c % W, y = Math.floor(c / W);
+        const closed = [];
+        for (let d = 0; d < 4; d++) { const nx = x + DIRS[d][0], ny = y + DIRS[d][1]; if (inb(nx, ny) && !(open[c] & DIRS[d][2])) closed.push(d); }
+        if (closed.length) carve(c, closed[Math.floor(rng() * closed.length)]);
+      }
+      // Find the "core": cells that aren't part of dead-end branches.
+      const deg = Array.from({ length: W * H }, (_, c) => degree(c));
+      core = new Uint8Array(W * H).fill(1);
+      const q = [];
+      for (let c = 0; c < W * H; c++) if (deg[c] <= 1 && c !== ENTRY && c !== EXIT) q.push(c);
+      while (q.length) {
+        const c = q.pop(); if (!core[c]) continue; core[c] = 0;
+        for (const n of neighbors(c)) if (core[n] && --deg[n] <= 1 && n !== ENTRY && n !== EXIT) q.push(n);
+      }
+      // Place gates on core cells, spread apart.
+      gateAt = {};
+      gateAt[ENTRY] = 'senses';
+      const ex = EXIT % W, ey = Math.floor(EXIT / W), sx = ENTRY % W, sy = Math.floor(ENTRY / W);
+      const manh = (a, b) => Math.abs(a % W - b % W) + Math.abs(Math.floor(a / W) - Math.floor(b / W));
+      const cands = shuffle([...Array(W * H).keys()].filter(c => core[c] && manh(c, ENTRY) > 2 && manh(c, EXIT) > 1), rng);
+      const ids = shuffle(GATE_ORDER.filter(g => g !== 'senses'), rng);
+      const placed = [];
+      for (let minD = 5; minD >= 1 && placed.length < ids.length; minD--) {
+        for (const c of cands) {
+          if (placed.length >= ids.length) break;
+          if (placed.includes(c)) continue;
+          if (placed.every(p => manh(p, c) >= minD)) placed.push(c);
+        }
+      }
+      placed.forEach((c, i) => { gateAt[c] = ids[i]; });
+      void ex; void ey; void sx; void sy;
+      // Shortest distances from the entry (used for mood).
+      distFromEntry = new Int32Array(W * H).fill(-1);
+      distFromEntry[ENTRY] = 0;
+      const bq = [ENTRY];
+      for (let i = 0; i < bq.length; i++) for (const n of neighbors(bq[i])) if (distFromEntry[n] < 0) { distFromEntry[n] = distFromEntry[bq[i]] + 1; bq.push(n); }
+    }
+
+    function bfsPath(from, to) {
+      const prev = new Int32Array(W * H).fill(-2); prev[from] = -1;
+      const q = [from];
+      for (let i = 0; i < q.length; i++) {
+        const c = q[i]; if (c === to) break;
+        for (const n of neighbors(c)) if (prev[n] === -2) { prev[n] = c; q.push(n); }
+      }
+      if (prev[to] === -2) return null;
+      const path = []; for (let c = to; c !== -1; c = prev[c]) path.push(c);
+      return path.reverse();
+    }
+
+    function randomRoute(rng) {
+      // Randomized DFS on the core graph: returns a simple path entry -> exit.
+      const seen = new Uint8Array(W * H);
+      const stack = [{ c: ENTRY, opts: shuffle(neighbors(ENTRY).filter(n => core[n]), rng) }];
+      seen[ENTRY] = 1;
+      while (stack.length) {
+        const top = stack[stack.length - 1];
+        if (top.c === EXIT) return stack.map(s => s.c);
+        const n = top.opts.pop();
+        if (n === undefined) { stack.pop(); continue; }
+        if (seen[n]) continue;
+        seen[n] = 1;
+        stack.push({ c: n, opts: shuffle(neighbors(n).filter(m => core[m] && !seen[m]), rng) });
+      }
+      return null;
+    }
+
+    function gatesAlong(path) {
+      const out = [], got = new Set();
+      path.forEach((c, step) => {
+        const g = gateAt[c];
+        if (g && !got.has(g)) { got.add(g); out.push({ id: g, steps: step, shortest: distFromEntry[c] }); }
+      });
+      return out;
+    }
+
+    function countRoutes(budgetMs) {
+      const t0 = performance.now();
+      let count = 0, calls = 0, capped = false;
+      const seen = new Uint8Array(W * H), seqs = new Set(), seq = ['senses'];
+      function dfs(c) {
+        if (capped) return;
+        if (++calls % 4096 === 0 && performance.now() - t0 > budgetMs) { capped = true; return; }
+        if (c === EXIT) { count++; seqs.add(seq.join('>')); return; }
+        seen[c] = 1;
+        for (const n of neighbors(c)) {
+          if (seen[n] || !core[n]) continue;
+          const g = gateAt[n];
+          if (g) seq.push(g);
+          dfs(n);
+          if (g) seq.pop();
+        }
+        seen[c] = 0;
+      }
+      dfs(ENTRY);
+      return { count, orders: seqs.size, capped };
+    }
+
+    // ---------- Perception model ----------
+    function moodFor(g) { return g.steps > g.shortest * 1.4 + 2 ? 'gloomy' : 'elated'; }
+
+    function buildState(gates) {
+      const st = {
+        show: { bird: true, flower: true, cat: true }, dog: false, fox: false, uv: false, heat: false, grid: false,
+        doorColor: '#7c2d12', treeDx: 0, treeScale: 1, houseScale: 1, labels: false, posterize: false,
+        blur: 0, mood: null, dropped: false, notes: [],
+      };
+      for (const g of gates) {
+        const note = t => st.notes.push({ id: g.id, text: t });
+        switch (g.id) {
+          case 'senses':
+            st.blur = 0.6;
+            note('UV patterns on the flower and the cat\'s body heat are right there, and you can\'t see them. Edges are a little soft.');
+            break;
+          case 'attention':
+            if (st.show.bird || st.show.flower) { st.show.bird = false; st.show.flower = false; st.dropped = true; note('You were looking at the house. The bird and the flower never registered at all.'); }
+            else note('Nothing new to drop.');
+            break;
+          case 'memory':
+            st.treeDx = -34; st.doorColor = '#1d4ed8';
+            note('By the time you recall it, the tree has moved closer to the house and the brown door has turned blue. It feels exactly right.');
+            break;
+          case 'expectation':
+            st.dog = true;
+            note('You "saw" the neighbor\'s dog by the fence. It\'s usually there. Today it wasn\'t.');
+            break;
+          case 'emotion':
+            st.mood = moodFor(g);
+            note(st.mood === 'gloomy'
+              ? `You took ${g.steps} steps to get here when ${g.shortest} would have done. Frustrated, you see a drab, washed-out world.`
+              : `You got here quickly (${g.steps} steps) and feel great. The whole scene looks brighter and warmer than it is.`);
+            break;
+          case 'language':
+            st.labels = true; st.posterize = true;
+            note('Everything got a name and a flat color. Dozens of greens became simply "green".');
+            break;
+          case 'culture':
+            st.treeScale = 1.3; st.houseScale = 0.82;
+            note('The old tree matters where you come from, so it looms large. The house shrinks in importance.');
+            break;
+          case 'testimony':
+            if (st.show.cat) { st.fox = true; note('Someone told you confidently that it was a fox. Now that\'s what you remember seeing.'); }
+            break;
+          case 'instruments':
+            st.uv = true; st.heat = true; st.grid = true;
+            note('A UV camera and a thermal sensor reveal the flower\'s nectar guides and the animal\'s heat. You\'re now looking at a measurement and not at the thing itself.');
+            break;
+          case 'doubt': {
+            const fixed = [];
+            if (st.dog) { st.dog = false; fixed.push('the dog you expected'); }
+            if (st.fox) { st.fox = false; fixed.push('the "fox" you were told about'); }
+            let t = fixed.length ? `You questioned it and removed ${fixed.join(' and ')}.` : 'You checked and found nothing obviously wrong. That isn\'t the same as being right.';
+            if (st.dropped) t += ' The bird and flower you never noticed stay missing, because doubt can\'t check what you never saw.';
+            if (st.treeDx) t += ' The memory edits still feel true, so they stay.';
+            note(t);
+            break;
+          }
+        }
+      }
+      return st;
+    }
+
+    let sceneUid = 0;
+    function sceneSVG(st, label) {
+      const u = 's' + (++sceneUid);
+      const prims = [];
+      if (st.blur) prims.push(`<feGaussianBlur stdDeviation="${st.blur}"/>`);
+      if (st.mood === 'gloomy') prims.push('<feColorMatrix type="saturate" values="0.3"/>', '<feColorMatrix type="matrix" values="0.72 0 0 0 0  0 0.75 0 0 0  0 0 0.9 0 0.06  0 0 0 1 0"/>');
+      if (st.mood === 'elated') prims.push('<feColorMatrix type="saturate" values="1.7"/>', '<feColorMatrix type="matrix" values="1.08 0 0 0 0.05  0 1.02 0 0 0.03  0 0 0.88 0 0  0 0 0 1 0"/>');
+      if (st.posterize) prims.push('<feComponentTransfer><feFuncR type="discrete" tableValues="0.1 0.45 0.75 1"/><feFuncG type="discrete" tableValues="0.1 0.45 0.75 1"/><feFuncB type="discrete" tableValues="0.1 0.45 0.75 1"/></feComponentTransfer>');
+      const filt = prims.length ? `<filter id="${u}f" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">${prims.join('')}</filter>` : '';
+
+      const catColor = st.fox ? '#ea580c' : '#334155';
+      const tx = 172 + st.treeDx;
+      let s = '';
+      s += `<rect width="320" height="200" fill="url(#${u}sky)"/>`;
+      s += '<circle cx="268" cy="40" r="18" fill="#fde047"/>';
+      if (st.show.bird) s += '<path d="M108 50 q6 -8 12 0 q6 -8 12 0" stroke="#1e293b" stroke-width="2.4" fill="none" stroke-linecap="round"/>';
+      s += '<rect y="140" width="320" height="60" fill="#65a30d"/><rect y="140" width="320" height="5" fill="#3f6212" opacity="0.4"/>';
+      // house
+      s += `<g transform="translate(75 145) scale(${st.houseScale}) translate(-75 -145)">`
+        + '<rect x="40" y="96" width="70" height="49" fill="#fdba74"/>'
+        + '<polygon points="33,98 75,63 117,98" fill="#b45309"/>'
+        + `<rect x="68" y="118" width="15" height="27" fill="${st.doorColor}"/>`
+        + '<rect x="47" y="106" width="15" height="12" fill="#e0f2fe" stroke="#78350f" stroke-width="1.5"/>'
+        + '<rect x="89" y="106" width="15" height="12" fill="#e0f2fe" stroke="#78350f" stroke-width="1.5"/></g>';
+      // tree
+      s += `<g transform="translate(${tx} 145) scale(${st.treeScale}) translate(${-tx} -145)">`
+        + `<rect x="${tx - 6}" y="98" width="12" height="47" fill="#78350f"/>`
+        + `<circle cx="${tx - 16}" cy="96" r="16" fill="#16a34a"/><circle cx="${tx + 16}" cy="96" r="16" fill="#16a34a"/><circle cx="${tx}" cy="84" r="25" fill="#15803d"/></g>`;
+      // flower
+      if (st.show.flower) {
+        s += '<line x1="140" y1="172" x2="140" y2="152" stroke="#166534" stroke-width="2.5"/>';
+        for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; s += `<circle cx="${(140 + 7 * Math.cos(a)).toFixed(1)}" cy="${(146 + 7 * Math.sin(a)).toFixed(1)}" r="5.5" fill="#fde047"/>`; }
+        if (st.uv) s += '<circle cx="140" cy="146" r="8.5" fill="none" stroke="#6d28d9" stroke-width="3" opacity="0.9"/>';
+        s += `<circle cx="140" cy="146" r="4" fill="${st.uv ? '#4c1d95' : '#ea580c'}"/>`;
+      }
+      // cat (or "fox")
+      if (st.show.cat) {
+        if (st.heat) s += `<circle cx="238" cy="158" r="28" fill="url(#${u}heat)"/>`;
+        s += `<path d="M222 162 q-14 -4 -9 -20" stroke="${catColor}" stroke-width="${st.fox ? 7 : 3.5}" fill="none" stroke-linecap="round"/>`;
+        if (st.fox) s += '<circle cx="213" cy="142" r="3.5" fill="#fff7ed"/>';
+        s += `<ellipse cx="236" cy="164" rx="16" ry="10" fill="${catColor}"/>`
+          + `<circle cx="252" cy="150" r="8" fill="${catColor}"/>`
+          + `<polygon points="245,146 247,${st.fox ? 132 : 137} 251,143" fill="${catColor}"/><polygon points="253,143 257,${st.fox ? 132 : 137} 259,147" fill="${catColor}"/>`
+          + '<circle cx="255" cy="149" r="1.3" fill="#fef9c3"/>';
+      }
+      // expected dog
+      if (st.dog) {
+        s += '<ellipse cx="292" cy="168" rx="14" ry="8" fill="#a16207"/><circle cx="305" cy="158" r="7" fill="#a16207"/>'
+          + '<ellipse cx="301" cy="157" rx="2.5" ry="5" fill="#713f12"/><path d="M279 165 q-6 -8 -2 -12" stroke="#a16207" stroke-width="3" fill="none" stroke-linecap="round"/>'
+          + '<line x1="284" y1="174" x2="284" y2="181" stroke="#a16207" stroke-width="3"/><line x1="299" y1="174" x2="299" y2="181" stroke="#a16207" stroke-width="3"/>';
+      }
+
+      let over = '';
+      if (st.grid) {
+        over += `<rect width="320" height="200" fill="url(#${u}grid)"/>`;
+        over += '<text x="6" y="194" font-size="8" font-family="monospace" fill="#0e7490">UV 365nm · IR 9.4µm</text>';
+      }
+      if (st.labels) {
+        const tag = (x, y, t) => `<g><rect x="${x - t.length * 3.2 - 4}" y="${y - 8}" width="${t.length * 6.4 + 8}" height="12" rx="3" fill="#0f172a" opacity="0.8"/><text x="${x}" y="${y + 1.5}" font-size="8.5" font-weight="700" text-anchor="middle" font-family="system-ui, sans-serif" fill="#fff">${t}</text></g>`;
+        over += tag(268, 72, 'SUN') + tag(75, 58, 'HOUSE') + tag(tx, 60 - (st.treeScale - 1) * 60, 'TREE');
+        if (st.show.cat) over += tag(240, 188, st.fox ? 'FOX' : 'CAT');
+        if (st.show.flower) over += tag(140, 186, 'FLOWER');
+        if (st.show.bird) over += tag(120, 36, 'BIRD');
+        if (st.dog) over += tag(292, 150, 'DOG');
+      }
+      const defs = `<defs><linearGradient id="${u}sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7dd3fc"/><stop offset="1" stop-color="#e0f2fe"/></linearGradient>`
+        + `<radialGradient id="${u}heat"><stop offset="0" stop-color="#ef4444" stop-opacity="0.85"/><stop offset="0.6" stop-color="#f97316" stop-opacity="0.45"/><stop offset="1" stop-color="#f97316" stop-opacity="0"/></radialGradient>`
+        + `<pattern id="${u}grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0H0V20" fill="none" stroke="#06b6d4" stroke-width="0.6" opacity="0.6"/></pattern>${filt}</defs>`;
+      return `<svg class="scene" viewBox="0 0 320 200" role="img" aria-label="${label || 'Perceived scene'}">${defs}<g${filt ? ` filter="url(#${u}f)"` : ''}>${s}</g>${over}</svg>`;
+    }
+
+    // ---------- Rendering the maze ----------
+    const svg = document.getElementById('maze');
+    svg.setAttribute('viewBox', `0 0 ${VBW} ${VBH}`);
+    const NS = 'http://www.w3.org/2000/svg';
+    const cx = c => MX + (c % W) * CS + CS / 2;
+    const cy = c => MY + Math.floor(c / W) * CS + CS / 2;
+    let layerGhosts, layerTrail, playerEl, gateEls = {};
+
+    function el(tag, attrs, parent) {
+      const e = document.createElementNS(NS, tag);
+      for (const k in attrs) e.setAttribute(k, attrs[k]);
+      if (parent) parent.appendChild(e);
+      return e;
+    }
+
+    function drawMaze() {
+      svg.innerHTML = '';
+      const css = getComputedStyle(document.documentElement);
+      const wall = css.getPropertyValue('--wall').trim(), floor = css.getPropertyValue('--floor').trim();
+      const muted = css.getPropertyValue('--muted').trim(), accent = css.getPropertyValue('--accent').trim();
+      el('rect', { x: MX, y: MY, width: W * CS, height: H * CS, fill: floor, rx: 4 }, svg);
+
+      // Presumption & Reality labels
+      const ey = cy(ENTRY), xy = cy(EXIT);
+      const pres = el('text', { x: MX / 2, y: ey, 'text-anchor': 'middle', 'font-size': 13, 'font-weight': 700, fill: muted, transform: `rotate(-90 ${MX / 2} ${ey})`, 'letter-spacing': '0.08em' }, svg);
+      pres.textContent = 'PRESUMPTION';
+      el('path', { d: `M${MX - 22} ${ey} H${MX - 4} M${MX - 10} ${ey - 5} L${MX - 4} ${ey} L${MX - 10} ${ey + 5}`, stroke: muted, 'stroke-width': 2, fill: 'none' }, svg);
+      const rx = VBW - MX / 2;
+      el('rect', { x: VBW - MX + 8, y: xy - 26, width: 30, height: 52, rx: 4, fill: accent, opacity: 0.18 }, svg);
+      const real = el('text', { x: rx, y: xy, 'text-anchor': 'middle', 'font-size': 13, 'font-weight': 700, fill: accent, transform: `rotate(90 ${rx} ${xy})`, 'letter-spacing': '0.08em' }, svg);
+      real.textContent = 'REALITY';
+
+      // Walls
+      let d = '';
+      for (let c = 0; c < W * H; c++) {
+        const x0 = MX + (c % W) * CS, y0 = MY + Math.floor(c / W) * CS;
+        if (!(open[c] & 1)) d += `M${x0} ${y0}h${CS}`;
+        if (!(open[c] & 8) && c !== ENTRY) d += `M${x0} ${y0}v${CS}`;
+        if (Math.floor(c / W) === H - 1) d += `M${x0} ${y0 + CS}h${CS}`;
+        if (c % W === W - 1 && c !== EXIT) d += `M${x0 + CS} ${y0}v${CS}`;
+      }
+      el('path', { d, stroke: wall, 'stroke-width': 3, 'stroke-linecap': 'round', fill: 'none' }, svg);
+
+      layerGhosts = el('g', {}, svg);
+      layerTrail = el('polyline', { fill: 'none', stroke: css.getPropertyValue('--trail').trim(), 'stroke-width': 4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity: 0.55 }, svg);
+
+      // Gates
+      gateEls = {};
+      for (const c in gateAt) {
+        const g = GATES[gateAt[c]];
+        const grp = el('g', { class: 'gate-mark' }, svg);
+        el('circle', { cx: cx(+c), cy: cy(+c), r: CS * 0.4, fill: g.color, opacity: 0.22 }, grp);
+        el('circle', { cx: cx(+c), cy: cy(+c), r: CS * 0.4, fill: 'none', stroke: g.color, 'stroke-width': 2 }, grp);
+        const t = el('text', { x: cx(+c), y: cy(+c) + 5.5, 'text-anchor': 'middle', 'font-size': 16 }, grp);
+        t.textContent = g.icon;
+        const title = el('title', {}, grp); title.textContent = g.name;
+        gateEls[gateAt[c]] = grp;
+      }
+
+      playerEl = el('circle', { r: CS * 0.26, fill: accent, stroke: '#fff', 'stroke-width': 2.5 }, svg);
+    }
+
+    // ---------- Player ----------
+    let pos, trail, collected, steps, done, autoTimer = null;
+    const logEl = document.getElementById('log');
+
+    function resetPlayer() {
+      stopAuto();
+      pos = ENTRY; trail = [ENTRY]; steps = 0; done = false;
+      collected = [{ id: 'senses', steps: 0, shortest: 0 }];
+      document.getElementById('result').classList.remove('show');
+      for (const k in gateEls) gateEls[k].style.opacity = 1;
+      gateEls.senses.style.opacity = 0.35;
+      logEl.innerHTML = `<strong>${GATES.senses.icon} You set off from Presumption.</strong> The first gate is always the Senses, because there's no other way in. Find the door marked Reality on the far side.`;
+      updatePlayer(); updateLens();
+    }
+
+    function updatePlayer() {
+      playerEl.setAttribute('cx', cx(pos)); playerEl.setAttribute('cy', cy(pos));
+      layerTrail.setAttribute('points', trail.map(c => `${cx(c)},${cy(c)}`).join(' '));
+    }
+
+    function chipsHTML(list) {
+      return list.map((g, i) => `<span class="chip"><i style="background:${GATES[g.id].color}"></i><span class="n">${i + 1}</span>${GATES[g.id].name}</span>`).join('');
+    }
+
+    function updateLens() {
+      document.getElementById('preview').innerHTML = sceneSVG(buildState(collected), 'Reality through your current lens');
+      document.getElementById('lens-chips').innerHTML = chipsHTML(collected);
+    }
+
+    function move(d) {
+      if (done) return false;
+      const [dx, dy, bit] = DIRS[d];
+      if (!(open[pos] & bit)) return false;
+      pos = idx(pos % W + dx, Math.floor(pos / W) + dy);
+      steps++; trail.push(pos);
+      const g = gateAt[pos];
+      if (g && !collected.some(x => x.id === g)) {
+        const entry = { id: g, steps, shortest: distFromEntry[pos] };
+        collected.push(entry);
+        gateEls[g].style.opacity = 0.35;
+        const st = buildState(collected);
+        const note = st.notes.filter(n => n.id === g).pop();
+        logEl.innerHTML = `<strong>${GATES[g].icon} ${GATES[g].name}.</strong> ${note ? note.text : ''}`;
+        updateLens();
+      }
+      updatePlayer();
+      if (pos === EXIT) arrive();
+      return true;
+    }
+
+    function arrive() {
+      done = true; stopAuto();
+      const st = buildState(collected);
+      const skipped = GATE_ORDER.filter(g => !collected.some(c => c.id === g)).map(g => GATES[g].name);
+      logEl.innerHTML = `<strong>🚪 You reached Reality.</strong> It looks completely real. Scroll down to see what you're actually looking at.`;
+      document.getElementById('result-sub').textContent =
+        `You took ${steps} steps and passed ${collected.length} filter${collected.length > 1 ? 's' : ''}. ` +
+        (skipped.length ? `You missed ${skipped.join(', ')}, so their effects (good and bad) aren't in your picture.` : 'You passed every filter in the maze.');
+      document.getElementById('result-scene').innerHTML = sceneSVG(st, 'The reality you arrived at') + `<div class="chips">${chipsHTML(collected)}</div>`;
+      document.getElementById('result-notes').innerHTML = st.notes.map(n =>
+        `<li><span class="ic">${GATES[n.id].icon}</span><span><b>${GATES[n.id].name}:</b> ${n.text}</span></li>`).join('');
+      const r = document.getElementById('result');
+      r.classList.add('show');
+      setTimeout(() => r.scrollIntoView({ behavior: 'smooth', block: 'start' }), 350);
+    }
+
+    function stopAuto() { if (autoTimer) { clearInterval(autoTimer); autoTimer = null; } }
+
+    function walkTo(target) {
+      if (done) return;
+      const path = bfsPath(pos, target);
+      if (!path || path.length < 2) return;
+      stopAuto();
+      let i = 1;
+      autoTimer = setInterval(() => {
+        if (i >= path.length || done) return stopAuto();
+        const a = path[i - 1], b = path[i], dx = b % W - a % W, dy = Math.floor(b / W) - Math.floor(a / W);
+        const d = DIRS.findIndex(([x, y]) => x === dx && y === dy);
+        if (!move(d)) return stopAuto();
+        i++;
+      }, 60);
+    }
+
+    // ---------- Other travelers ----------
+    const TRAVELER_COLORS = ['#f472b6', '#22d3ee', '#facc15', '#34d399'];
+    let travelers = [], ghostAnim = null;
+
+    function pickTravelers() {
+      const rng = mulberry32(mazeSeed ^ 0x9e3779b9);
+      const found = [], keys = new Set();
+      for (let t = 0; t < 200 && found.length < 4; t++) {
+        const path = randomRoute(rng);
+        if (!path) continue;
+        const gates = [{ id: 'senses', steps: 0, shortest: 0 }].concat(gatesAlong(path).filter(g => g.id !== 'senses'));
+        const key = gates.map(g => g.id).join('>');
+        if (keys.has(key)) continue;
+        keys.add(key); found.push({ path, gates });
+      }
+      travelers = found.map((t, i) => ({ ...t, color: TRAVELER_COLORS[i], name: `Traveler ${String.fromCharCode(65 + i)}` }));
+    }
+
+    function renderGallery() {
+      const html = travelers.map(t => {
+        const st = buildState(t.gates);
+        return `<div class="card traveler"><h3><i style="background:${t.color}"></i>${t.name}</h3>${sceneSVG(st, t.name + "'s reality")}`
+          + `<div class="chips">${chipsHTML(t.gates)}</div><div class="meta">${t.path.length - 1} steps · ${t.gates.length} filters</div></div>`;
+      }).join('');
+      document.getElementById('gallery').innerHTML = html
+        + (travelers.length < 4 ? '' : '')
+        + `<div class="card traveler territory"><h3 style="justify-content:center">Reality itself</h3><div class="q">?</div>`
+        + `<p class="small muted">No route reaches this card unfiltered. Every picture above is a map of the same territory, and nobody gets to look at the territory directly.</p></div>`;
+      // Keep the grid tidy: show at most 3 travelers next to the territory card.
+      const cards = document.querySelectorAll('#gallery .traveler:not(.territory)');
+      cards.forEach((c, i) => { if (i > 2) c.remove(); });
+    }
+
+    function sendGhosts() {
+      if (ghostAnim) cancelAnimationFrame(ghostAnim);
+      layerGhosts.innerHTML = '';
+      const shown = travelers.slice(0, 3);
+      const items = shown.map(t => ({
+        t,
+        line: el('polyline', { fill: 'none', stroke: t.color, 'stroke-width': 3, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity: 0.7 }, layerGhosts),
+        dot: el('circle', { r: CS * 0.18, fill: t.color, stroke: '#0f172a', 'stroke-width': 1.5 }, layerGhosts),
+      }));
+      const speed = 9; // cells per second
+      const start = performance.now();
+      function frame(now) {
+        const p = (now - start) / 1000 * speed;
+        let running = false;
+        for (const it of items) {
+          const path = it.t.path, k = Math.min(Math.floor(p), path.length - 1), f = Math.min(p - k, 1);
+          const a = path[k], b = path[Math.min(k + 1, path.length - 1)];
+          const x = cx(a) + (cx(b) - cx(a)) * f, y = cy(a) + (cy(b) - cy(a)) * f;
+          it.dot.setAttribute('cx', x); it.dot.setAttribute('cy', y);
+          it.line.setAttribute('points', path.slice(0, k + 1).map(c => `${cx(c)},${cy(c)}`).concat(`${x},${y}`).join(' '));
+          if (k < path.length - 1) running = true;
+        }
+        if (running) ghostAnim = requestAnimationFrame(frame);
+        else {
+          ghostAnim = null;
+          logEl.innerHTML = '<strong>👥 The other travelers all reached the same door.</strong> Scroll down to compare the realities they walked out with.';
+        }
+      }
+      ghostAnim = requestAnimationFrame(frame);
+    }
+
+    // ---------- Setup ----------
+    function newMaze(seed) {
+      if (ghostAnim) { cancelAnimationFrame(ghostAnim); ghostAnim = null; }
+      generate(seed);
+      drawMaze();
+      resetPlayer();
+      pickTravelers();
+      renderGallery();
+      document.getElementById('stat-routes').textContent = '…';
+      document.getElementById('stat-orders').textContent = '…';
+      setTimeout(() => {
+        const r = countRoutes(300);
+        const fmt = n => n.toLocaleString();
+        document.getElementById('stat-routes').textContent = fmt(r.count) + (r.capped ? '+' : '');
+        document.getElementById('stat-orders').textContent = fmt(r.orders) + (r.capped ? '+' : '');
+      }, 30);
+    }
+
+    document.getElementById('gate-list').innerHTML = GATE_ORDER.map(id => {
+      const g = GATES[id];
+      return `<div class="card gate"><div class="ic" style="border-color:${g.color};background:${g.color}22">${g.icon}</div><div><h3>${g.name}</h3><p>${g.text}</p></div></div>`;
+    }).join('');
+
+    const KEYS = { ArrowUp: 0, KeyW: 0, ArrowRight: 1, KeyD: 1, ArrowDown: 2, KeyS: 2, ArrowLeft: 3, KeyA: 3 };
+    window.addEventListener('keydown', e => {
+      if (e.target.closest && e.target.closest('input, textarea, select')) return;
+      if (!(e.code in KEYS)) return;
+      e.preventDefault(); stopAuto(); move(KEYS[e.code]);
+    });
+    document.querySelectorAll('.dpad button').forEach(b => b.addEventListener('click', () => { stopAuto(); move(+b.dataset.dir); }));
+    svg.addEventListener('click', e => {
+      const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+      const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+      let x = Math.floor((p.x - MX) / CS), y = Math.floor((p.y - MY) / CS);
+      if (p.x > MX + W * CS) { x = W - 1; y = Math.floor(H / 2); } // clicking the Reality door
+      if (!inb(x, y)) return;
+      walkTo(idx(x, y));
+    });
+    document.getElementById('btn-restart').addEventListener('click', () => { if (ghostAnim) cancelAnimationFrame(ghostAnim); ghostAnim = null; layerGhosts.innerHTML = ''; resetPlayer(); });
+    document.getElementById('btn-new').addEventListener('click', () => newMaze((Math.random() * 2 ** 32) >>> 0));
+    document.getElementById('btn-ghosts').addEventListener('click', sendGhosts);
+    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => newMaze(mazeSeed));
+
+    newMaze(20261012);
+  })();
+  </script>
+</body>
+</html>
